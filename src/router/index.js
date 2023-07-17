@@ -27,9 +27,24 @@ let router = new Router({
                     meta: { title: '用户管理' }
                 },
                 {
+                    path: '/doctorTable',
+                    component: () => import(/* webpackChunkName: "doctorTable" */ '@/components/page/DoctorTable.vue'),
+                    meta: { title: '咨询师管理' }
+                },
+                {
+                    path: '/certifiedTable',
+                    component: () => import(/* webpackChunkName: "certifiedTable" */ '@/components/page/CertifiedTable.vue'),
+                    meta: { title: '认证申请' }
+                },
+                {
                     path: '/essayTable',
                     component: () => import(/* webpackChunkName: "essayTable" */ '@/components/page/EssayTable.vue'),
                     meta: { title: '文章管理' }
+                },
+                {
+                    path: '/certifiedEssay',
+                    component: () => import(/* webpackChunkName: "certifiedEssay" */ '@/components/page/CertifiedEssay.vue'),
+                    meta: { title: '文章审核' }
                 },
                 {
                     path: '/commentTable',
@@ -37,10 +52,57 @@ let router = new Router({
                     meta: { title: '评论管理' }
                 },
                 {
-                    path: '/doctorTable',
-                    component: () => import(/* webpackChunkName: "doctorTable" */ '@/components/page/DoctorTable.vue'),
-                    meta: { title: '咨询师数据' }
+                    path: '/questionTable',
+                    component: () => import(/* webpackChunkName: "questionTable" */ '@/components/page/QuestionTable.vue'),
+                    meta: { title: '提问管理' }
                 },
+                {
+                    path: '/answerTable',
+                    component: () => import(/* webpackChunkName: "answerTable" */ '@/components/page/AnswerTable.vue'),
+                    meta: { title: '回复管理' }
+                },
+                {
+                    path: '/testTable',
+                    component: () => import(/* webpackChunkName: "testTable" */ '@/components/page/TestTable.vue'),
+                    meta: { title: '问卷信息管理' }
+                },
+                {
+                    path: '/testQTable',
+                    component: () => import(/* webpackChunkName: "testQTable" */ '@/components/page/TestQTable.vue'),
+                    meta: { title: '问卷内容管理' }
+                },
+                {
+                    path: '/testCTable',
+                    component: () => import(/* webpackChunkName: "testCTable" */ '@/components/page/TestCTable.vue'),
+                    meta: { title: '问卷查看' }
+                },
+                {
+                    path: '/testAddTable',
+                    component: () => import(/* webpackChunkName: "testAddTable" */ '@/components/page/TestAddTable.vue'),
+                    meta: { title: '问卷新增' }
+                },
+                {
+                    path: '/testATable',
+                    component: () => import(/* webpackChunkName: "testATable" */ '@/components/page/TestATable.vue'),
+                    meta: { title: '问卷规则管理' }
+                },
+                {
+                    path: '/testRTable',
+                    component: () => import(/* webpackChunkName: "testRTable" */ '@/components/page/TestRTable.vue'),
+                    meta: { title: '问卷结果管理' }
+                },
+                {
+                    path: '/sysTable',
+                    component: () => import(/* webpackChunkName: "sysTable" */ '@/components/page/SysTable.vue'),
+                    meta: { title: '系统公告管理' }
+                },
+                {
+                    path: '/sysEdit',
+                    component: () => import(/* webpackChunkName: "sysEdit" */ '@/components/page/SysEdit.vue'),
+                    meta: { title: '密码修改' }
+                },
+
+
                 {
                     path: '/tabs',
                     component: () => import(/* webpackChunkName: "tabs" */ '@/components/page/Tabs.vue'),
@@ -91,15 +153,16 @@ let router = new Router({
 router.beforeEach((to, from, next) => {
     document.title = `${to.meta.title} | INTIMATE_SYSTEM`;
     //添加登录信息到本地缓存
-    const role = localStorage.getItem('ms_username');
+    const role = localStorage.getItem('userInfo');
     console.log("当前的role：",role);
+    console.log("去往地址",to);
     //如果本地缓存无用户信息且去往页面不是登录页面则跳转登录页
-    if (!role && to.path !== '/login') {
+    if (!role && to.path != '/login') {
         next('/login');
     // 如果存在用户信息且是管理员权限则可进入（未完善）
     } else if (to.meta.permission) {
-        
-        role === 'admin' ? next() : next('/403');
+        const authority = JSON.parse(role).authority;
+        authority == 0 ? next() : next('/403');
         
     } else {
         // 简单的判断IE10及以下不进入富文本编辑器，该组件不兼容

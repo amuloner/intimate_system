@@ -4,7 +4,7 @@
         <div class="crumbs">
             <el-breadcrumb separator="/">
                 <el-breadcrumb-item>
-                    <i class="el-icon-lx-cascades"></i> 科普文章管理
+                    <i class="el-icon-lx-cascades"></i> 问卷结果管理
                 </el-breadcrumb-item>
             </el-breadcrumb>
         </div>
@@ -18,14 +18,18 @@
                     class="handle-del mr10"
                     @click="delAllSelection"
                 >批量删除</el-button>
-                <el-input v-model="query.author" placeholder="上传者" style="width: 120px" class="handle-input mr10" ></el-input>
-                <el-input v-model="query.title" placeholder="文章名" class="handle-input mr10"></el-input>
-                <el-input v-model="query.content" placeholder="文章内容检索" class="handle-input mr10"></el-input>
-                <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索</el-button>
+                <!-- <el-select v-model="query.status" placeholder="状态" class="handle-select mr10">
+                    <el-option key="1" label="已通过" value="1"></el-option>
+                    <el-option key="2" label="未审核" value="0"></el-option>
+                    <el-option key="3" label="所有" value=""></el-option>
+                </el-select> -->
+                <!-- <el-input v-model="query.fromName" placeholder="回复人" style="width: 120px" class="handle-input mr10"></el-input> -->
+                <!-- <el-input v-model="query.username" placeholder="测试人" class="handle-input mr10"></el-input> -->
+                <!-- <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索</el-button> -->
             </div>
             <!-- 表格数据体 -->
             <el-table
-                :data="essayList.records"
+                :data="testRList.records"
                 border
                 class="table"
                 ref="multipleTable"
@@ -35,37 +39,52 @@
                 @selection-change="handleSelectionChange"
             >
                 <el-table-column type="selection" width="55" align="center"></el-table-column>
-                <el-table-column label="ID" width="55" align="center">
+                <el-table-column fixed="left" label="ID" width="55" align="center">
                     <template slot-scope="scope">
                         {{(query.pageIndex - 1) * query.pageSize + scope.$index+1}}
                     </template>
                 </el-table-column>
-                <el-table-column label="头像(点击放大)" align="center" width="100">
+                <el-table-column label="用户名" show-overflow-tooltip align="center" width="120">
                     <template slot-scope="scope">
-                        <el-image
-                            class="table-td-thumb"
-                            :src="scope.row.smallImg"
-                            :preview-src-list="[scope.row.smallImg]"
-                        ></el-image>
-                    </template>
+                        {{scope.row.userInfo ? scope.row.userInfo.nickname : scope.row.username}}
+                    </template>  
                 </el-table-column>
-                <el-table-column prop="title" label="文章标题" width="160" show-overflow-tooltip></el-table-column>
-                <el-table-column prop="author" label="作者" align="center" width="100" show-overflow-tooltip></el-table-column>
-                <el-table-column prop="source" label="来源" align="center">
+                <el-table-column label="测评项" show-overflow-tooltip>
                     <template slot-scope="scope">
-                        {{scope.row.source? scope.row.source:'无'}}
-                    </template>
+                        {{scope.row.test.title || '无'}}
+                    </template>  
                 </el-table-column>
-                <el-table-column prop="readNum" label="阅读量" align="center" width="50"></el-table-column>
-                <el-table-column prop="essayLikes" label="点赞数量" align="center" width="50"></el-table-column>
-                <el-table-column prop="uploadTime" label="上传时间" align="center" width="100"></el-table-column>
+                <el-table-column label="得分" show-overflow-tooltip align="center" width="100">
+                    <template slot-scope="scope">
+                        {{scope.row.score || '无'}}
+                    </template>  
+                </el-table-column>
+                <el-table-column label="点评" show-overflow-tooltip align="center">
+                    <template slot-scope="scope">
+                        {{scope.row.message || '无'}}
+                    </template>  
+                </el-table-column>
+                <!-- <el-table-column prop="label" label="标签" show-overflow-tooltip align="center" width="70"></el-table-column>
+                <el-table-column prop="editor" label="创建人" show-overflow-tooltip align="center" width="70"></el-table-column>
+                <el-table-column label="单价" show-overflow-tooltip align="center" width="60">
+                    <template slot-scope="scope">
+                        <span :style="scope.row.isFree == 1 ? 'color: green' : ''">{{scope.row.isFree == 1 ? '免费' : scope.row.money}}</span>
+                    </template>  
+                </el-table-column>
+                <el-table-column prop="ctime" label="创建时间" width="100" align="center"></el-table-column>
+                <el-table-column label="审核状态" align="center" width="70">
+                    <template slot-scope="scope">
+                        <span style="color: green" v-if="scope.row.status == '1'">已通过</span>
+                        <span style="color: red" v-else>未审核</span>
+                    </template>         
+                </el-table-column> -->
                 <el-table-column label="操作" width="180" align="center" fixed="right">
                     <template slot-scope="scope">
                         <el-button
                             type="text"
                             icon="el-icon-edit"
-                            @click="handleEdit(scope.row)"
-                        >编辑</el-button>
+                            @click="handleView(scope.row)"
+                        >查看</el-button>
                         <el-button
                             type="text"
                             icon="el-icon-delete"
@@ -89,53 +108,27 @@
             </div>
         </div>
 
-        <!-- 编辑弹出框 -->
-        <el-dialog title="编辑" :visible.sync="editVisible" width="30%">
-            <el-form ref="form" :model="form" label-width="70px">
-                <el-form-item label="标题">
-                    <label slot="label">标&nbsp;&nbsp;&nbsp;&nbsp;题</label>
-                    <el-input v-model="form.title"></el-input>
+        <!-- 查看弹出框 -->
+        <el-dialog title="查看" :visible.sync="editVisible" width="40%">
+            <el-form ref="form" :model="form" label-width="90px" label-position="left">
+                 <el-form-item label="用户名">
+                    {{form.userInfo ? form.userInfo.nickname : form.username}}
                 </el-form-item>
-                <el-form-item label="作者">
-                    <label slot="label">作&nbsp;&nbsp;&nbsp;&nbsp;者</label>
-                    <el-input v-model="form.author"></el-input>
+                 <el-form-item label="测评项">
+                    {{form.test? form.test.title : ""}}
                 </el-form-item>
-                <el-form-item label="来源">
-                    <label slot="label">来&nbsp;&nbsp;&nbsp;&nbsp;源</label>
-                    <el-input v-model="form.source"></el-input>
+                 <el-form-item label="得分">
+                    <label slot="label">得&nbsp;&nbsp;&nbsp;&nbsp;分</label>
+                    {{form.score}}
                 </el-form-item>
-                <el-row>
-                    <el-col :span="12">
-                        <el-form-item label="阅读量">
-                            <el-input v-model="form.readNum" disabled></el-input>
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="12">
-                        <el-form-item label="点赞量">
-                            <el-input v-model="form.essayLikes" disabled></el-input>
-                        </el-form-item>
-                    </el-col>
-                </el-row>
-
-                <el-form-item label="上传时间">
-                    <el-input v-model="form.uploadTime"></el-input>
+                <el-form-item label="点评">
+                    <label slot="label">点&nbsp;&nbsp;&nbsp;&nbsp;评</label>
+                    <el-input class="textarea" type="textarea" rows="5" v-model="form.message"></el-input>
                 </el-form-item>
-                <el-form-item label="内容">
-                    <label slot="label">内&nbsp;&nbsp;&nbsp;&nbsp;容</label>
-                    <el-input type="textarea" rows="8" v-model="form.content"></el-input>
-                </el-form-item>
-                <!-- <el-row>
-                    <el-col :span="12">
-                        
-                    </el-col>
-                    <el-col :span="12">
-
-                    </el-col>
-                </el-row> -->
             </el-form>
             <span slot="footer" class="dialog-footer">
-                <el-button @click="editVisible = false; form = {}">取 消</el-button>
-                <el-button type="primary" @click="saveEdit">确 定</el-button>
+                <el-button @click="editVisible = false; form = {}">关 闭</el-button>
+                <!-- <el-button type="primary" @click="saveEdit">修改</el-button> -->
             </span>
         </el-dialog>
     </div>
@@ -143,31 +136,31 @@
 
 <script>
 import { mapState } from "vuex";
+import { isObjectValueEqual } from "@/utils/myFun";
 export default {
-    name: 'essaytable',
+    name: 'testTable',
     data() {
         return {
             // 搜索条件
             query: {
-                author: '',//作者
-                title: '',//文章标题
-                content: '',//文章内容
-                status: 0,
+                status: '',
+                username: '',
                 pageIndex: 1,
-                pageSize: 6
+                pageSize: 8
             },
             multipleSelection: [],
             //编辑框是否显示
             editVisible: false,
             // pageTotal: 0,
-            form: {},
+            form: {},//编辑框item
+            oldForm: {},//未修改的编辑框item
             id: -1
         };
     },
     computed: {
         ...mapState({
-            essayList: (state) => state.essay.essayList || [],
-            pageTotal: (state) => state.essay.essayList.total || 0
+            testRList: (state) => state.test.testRList || [],
+            pageTotal: (state) => state.test.testRList.total || 0
         })
     },
     mounted(){
@@ -176,7 +169,7 @@ export default {
     methods: {
         // 获取所有用户的数据
         getData() {
-            this.$store.dispatch('getEssayList',this.query);
+            this.$store.dispatch('getTestRList',this.query);
         },
         // 搜索操作
         handleSearch() {
@@ -187,7 +180,7 @@ export default {
         // 删除操作
         handleDelete(row) {
             // 二次确认删除
-            this.$confirm(`确定要删除文章《${row.title}》吗？`, '提示', {
+            this.$confirm(`确定要删除吗？`, '提示', {
                 type: 'warning'
             })
             .then(async() => {
@@ -195,7 +188,7 @@ export default {
                     let delList = [];
                     //添加进待删除数组数组
                     delList.push(row.id);
-                    await this.$store.dispatch("deleteEssayByIds",delList);
+                    await this.$store.dispatch("deleteTestRByIds",delList);
                     this.$message.success('删除成功');
                     this.getData();
                 } catch (error) {
@@ -207,22 +200,17 @@ export default {
         //批量删除
         delAllSelection() {
             const length = this.multipleSelection.length;
-            let str = '';
             let delList = [];
             for (let i = 0; i < length; i++) {
-                if(i > 0){
-                    str += '、';
-                }
-                str += "《" + this.multipleSelection[i].title + "》";
                 delList.push(this.multipleSelection[i].id);
             }
             // 二次确认删除
-            this.$confirm(`确定要删除文章${str}吗？`, '提示', {
+            this.$confirm(`确定要删除吗？`, '提示', {
                 type: 'warning'
             })
             .then(async() => {
                 try {
-                    await this.$store.dispatch("deleteEssayByIds",delList);
+                    await this.$store.dispatch("deleteTestRByIds",delList);
                     this.$message.success('删除成功');
                     this.getData();
                     this.multipleSelection = [];
@@ -236,23 +224,11 @@ export default {
         handleSelectionChange(val) {
             this.multipleSelection = val;
         },
-        // 编辑操作
-        handleEdit(row) {//传递点击的行角标、行数据
-            let form = JSON.parse(JSON.stringify(row));
-            this.form = form;
+        // 查看操作
+        handleView(row) {//传递点击的行角标、行数据
+            this.form = JSON.parse(JSON.stringify(row));
+            this.oldForm = JSON.parse(JSON.stringify(row));
             this.editVisible = true;
-        },
-        // 保存编辑
-        async saveEdit() {
-            //发送请求进行更改 
-            try {
-                await this.$store.dispatch("editEssayById",this.form);
-                this.getData();
-                this.editVisible = false;
-                this.$message.success(`修改文章${this.form.title}信息成功`);
-            } catch (error) {
-                this.$message.error("修改失败！请稍后再试");
-            }
         },
         // 分页导航
         handlePageChange(val) {
@@ -264,6 +240,10 @@ export default {
 </script>
 
 <style scoped>
+.textarea >>> .el-textarea__inner{
+ /* font-size:20px !important; */
+ color:black !important;
+}
 .handle-box {
     margin-bottom: 20px;
 }

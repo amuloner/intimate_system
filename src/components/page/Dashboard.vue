@@ -4,29 +4,32 @@
             <el-col :span="8">
                 <el-card shadow="hover" class="mgb20" style="height:252px;">
                     <div class="user-info">
-                        <img src="../../assets/img/img.jpg" class="user-avator" alt />
+                        <img :src="url+userInfo.headImg" class="user-avator" alt />
                         <div class="user-info-cont">
-                            <div class="user-info-name">{{name}}</div>
+                            <div class="user-info-name">{{userInfo.username}}</div>
                             <div>{{role}}</div>
                         </div>
                     </div>
                     <div class="user-info-list">
                         上次登录时间：
-                        <span>2019-11-01</span>
+                        <span>2022-09-28</span>
                     </div>
                     <div class="user-info-list">
                         上次登录地点：
-                        <span>东莞</span>
+                        <span>四川</span>
                     </div>
                 </el-card>
                 <el-card shadow="hover" style="height:252px;">
                     <div slot="header" class="clearfix">
-                        <span>语言详情</span>
-                    </div>Vue
-                    <el-progress :percentage="71.3" color="#42b983"></el-progress>JavaScript
-                    <el-progress :percentage="24.1" color="#f1e05a"></el-progress>CSS
-                    <el-progress :percentage="13.7"></el-progress>HTML
-                    <el-progress :percentage="5.9" color="#f56c6c"></el-progress>
+                        <span>服务情况</span>
+                    </div>咨询
+                    <el-progress :percentage="13.7" color="#42b983"></el-progress>
+                    问答
+                    <el-progress :percentage="24.1" color="#f1e05a"></el-progress>
+                    文章
+                    <el-progress :percentage="5.9"></el-progress>
+                    测评
+                    <el-progress :percentage="71.3" color="#f56c6c"></el-progress>
                 </el-card>
             </el-col>
             <el-col :span="16">
@@ -36,7 +39,7 @@
                             <div class="grid-content grid-con-1">
                                 <i class="el-icon-lx-people grid-con-icon"></i>
                                 <div class="grid-cont-right">
-                                    <div class="grid-num">1234</div>
+                                    <div class="grid-num">120</div>
                                     <div>用户访问量</div>
                                 </div>
                             </div>
@@ -47,8 +50,8 @@
                             <div class="grid-content grid-con-2">
                                 <i class="el-icon-lx-notice grid-con-icon"></i>
                                 <div class="grid-cont-right">
-                                    <div class="grid-num">321</div>
-                                    <div>系统消息</div>
+                                    <div class="grid-num">10</div>
+                                    <div>未处理</div>
                                 </div>
                             </div>
                         </el-card>
@@ -58,8 +61,8 @@
                             <div class="grid-content grid-con-3">
                                 <i class="el-icon-lx-goods grid-con-icon"></i>
                                 <div class="grid-cont-right">
-                                    <div class="grid-num">5000</div>
-                                    <div>数量</div>
+                                    <div class="grid-num">50</div>
+                                    <div>用户数量</div>
                                 </div>
                             </div>
                         </el-card>
@@ -112,26 +115,27 @@
 <script>
 import Schart from 'vue-schart';
 import bus from "@/components/common/bus";
+import { mapState } from 'vuex';
 export default {
     name: 'dashboard',
     data() {
         return {
-            name: localStorage.getItem('ms_username'),
+            userInfo: JSON.parse(localStorage.getItem('userInfo')),
             todoList: [
                 {
-                    title: '今天要修复100个bug',
+                    title: '认证咨询师申请',
                     status: false
                 },
                 {
-                    title: '今天要修复100个bug',
+                    title: '审核心理科普文章',
                     status: false
                 },
                 {
-                    title: '今天要写100行代码加几个bug吧',
+                    title: '发布新活动公告',
                     status: false
                 },
                 {
-                    title: '今天要修复100个bug',
+                    title: '通知咨询师准备季度审核',
                     status: false
                 },
                 {
@@ -176,42 +180,46 @@ export default {
             options: {
                 type: 'bar',
                 title: {
-                    text: '最近一周各品类销售图'
+                    text: '最近一周用户使用情况'
                 },
                 xRorate: 25,
                 labels: ['周一', '周二', '周三', '周四', '周五'],
                 datasets: [
                     {
-                        label: '家电',
+                        label: '咨询',
                         data: [234, 278, 270, 190, 230]
                     },
                     {
-                        label: '百货',
+                        label: '问答',
                         data: [164, 178, 190, 135, 160]
                     },
                     {
-                        label: '食品',
+                        label: '文章',
                         data: [144, 198, 150, 235, 120]
+                    },
+                    {
+                        label: '测评',
+                        data: [135, 230, 164, 190, 150]
                     }
                 ]
             },
             options2: {
                 type: 'line',
                 title: {
-                    text: '最近几个月各品类销售趋势图'
+                    text: '最近几年同期用户心理发展趋势'
                 },
                 labels: ['6月', '7月', '8月', '9月', '10月'],
                 datasets: [
                     {
-                        label: '家电',
+                        label: '2020',
                         data: [234, 278, 270, 190, 230]
                     },
                     {
-                        label: '百货',
+                        label: '2021',
                         data: [164, 178, 150, 135, 160]
                     },
                     {
-                        label: '食品',
+                        label: '2022',
                         data: [74, 118, 200, 235, 90]
                     }
                 ]
@@ -222,8 +230,12 @@ export default {
         Schart
     },
     computed: {
+        ...mapState({
+            url: (state) => state.url
+        }),
+
         role() {
-            return this.name === 'admin' ? '超级管理员' : '普通用户';
+            return this.userInfo.username === 'admin' ? '超级管理员' : '普通用户';
         }
     },
     // created() {

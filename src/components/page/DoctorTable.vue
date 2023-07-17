@@ -18,7 +18,7 @@
                     class="handle-del mr10"
                     @click="delAllSelection"
                 >批量取消</el-button>
-                <el-input v-model="query.username" placeholder="用户名" class="handle-input mr10"></el-input>
+                <el-input v-model="query.name" placeholder="用户名" class="handle-input mr10"></el-input>
                 <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索</el-button>
             </div>
             <!-- 表格数据体 -->
@@ -35,29 +35,27 @@
                 <el-table-column type="selection" width="55" align="center"></el-table-column>
                 <el-table-column fixed="left" label="ID" width="55" align="center">
                     <template slot-scope="scope">
-                        {{scope.$index+1}}
+                        {{(query.pageIndex - 1) * query.pageSize + scope.$index+1}}
                     </template>
                 </el-table-column>
-                <el-table-column fixed="left" prop="username" label="用户名" align="center"></el-table-column>
+                <el-table-column fixed="left" prop="name" label="姓名" align="center"></el-table-column>
                 <el-table-column label="性别" align="center">
                     <template slot-scope="scope">
                         {{scope.row.gender==='1'?'男':'女'}}
                     </template>
                 </el-table-column>
-                <el-table-column label="年龄" align="center">
+                <!-- <el-table-column prop="age" label="年龄" align="center"></el-table-column> -->
+                <el-table-column prop="conNum" label="咨询次数" align="center"></el-table-column>
+                <el-table-column prop="conLikes" label="咨询获赞量" align="center"></el-table-column>
+                <el-table-column prop="essayNum" label="发表文章数" align="center">
                     <template slot-scope="scope">
-                        {{getAge("511721200101211390")}}
+                        {{scope.row.essayNum ? scope.row.essayNum : 0}}
                     </template>
                 </el-table-column>
-                <el-table-column prop="conNum" label="咨询次数" align="center"></el-table-column>
-                <el-table-column prop="conDate" label="咨询时间" align="center"></el-table-column>
-                <el-table-column prop="conTime" label="单次咨询时长" align="center"></el-table-column>
-                <el-table-column prop="conLikes" label="咨询点赞量" align="center"></el-table-column>
-                <el-table-column prop="essayNum" label="发表文章数" align="center"></el-table-column>
-                <el-table-column prop="essayLikes" label="文章点赞总量" align="center"></el-table-column>
+                <!-- <el-table-column prop="essayLikes" label="文章点赞总量" align="center"></el-table-column> -->
                 <el-table-column prop="complaintsNum" label="被投诉次数" align="center"></el-table-column>
-                <el-table-column prop="registDate" label="注册时间" align="center" width="95"></el-table-column>
-                <el-table-column prop="conIntro" label="简介" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="atcationDate" label="认证时间" align="center" width="95"></el-table-column>
+                <!-- <el-table-column prop="conIntro" label="简介" show-overflow-tooltip></el-table-column> -->
                 <!-- <el-table-column label="实名状态">
                     <template slot-scope="scope">
                         {{!scope.row.idCard?"未实名":"已实名"}}
@@ -100,7 +98,7 @@
                 <el-row>
                     <el-col :span="8">
                         <el-form-item label="用户名:">
-                            {{form.username}}
+                            {{form.name}}
                         </el-form-item>
                     </el-col>
                     <el-col :span="8">
@@ -123,18 +121,6 @@
                         </el-form-item>
                     </el-col>
                     <el-col :span="8">
-                        <el-form-item label="咨询时间:">
-                            {{form.conDate}}
-                        </el-form-item>
-                    </el-col>
-                </el-row>
-                <el-row>
-                    <el-col :span="8">
-                        <el-form-item label="单次时长:">
-                            {{form.conTime}}
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="8">
                         <el-form-item label="咨询点赞:">
                             {{form.conLikes}}
                         </el-form-item>
@@ -148,7 +134,7 @@
                     </el-col>
                     <el-col :span="8">
                         <el-form-item label="文章获赞数:">
-                            {{form.essayLikes}}
+                            {{form.essayLikes || 0}}
                         </el-form-item>
                     </el-col>
                 </el-row>
@@ -159,15 +145,15 @@
                         </el-form-item>
                     </el-col>
                     <el-col :span="8">
-                        <el-form-item label="注册日期:">
-                            {{form.registDate}}
+                        <el-form-item label="认证时间:">
+                            {{form.atcationDate}}
                         </el-form-item>
                     </el-col>
                 </el-row>
-                <el-form-item label="简介">
+                <!-- <el-form-item label="简介">
                     <label slot="label">简&nbsp;&nbsp;&nbsp;&nbsp;介:</label>
-                    <el-input class="textarea" disabled type="textarea" rows="5" v-model="form.conIntro"></el-input>
-                </el-form-item>
+                    <el-input class="textarea" disabled type="textarea" rows="10" v-model="form.conIntro"></el-input>
+                </el-form-item> -->
             </el-form>
             <span slot="footer" class="dialog-footer">
                 <el-button @click="editVisible = false; form = {}" type="primary">关 闭</el-button>
@@ -184,9 +170,9 @@ export default {
         return {
             // 搜索条件
             query: {
-                username: '',
+                name: '',
                 pageIndex: 1,
-                pageSize: 3
+                pageSize: 6
             },
             multipleSelection: [],
             //编辑框是否显示
@@ -200,6 +186,7 @@ export default {
         ...mapState({
             conList: (state) => state.user.conList || [],
             pageTotal: (state) => state.user.conList.total || 0,
+            
         })
     },
     mounted(){
@@ -219,7 +206,7 @@ export default {
         // 取消用户咨询师资格操作
         handleDelete(row) {
             // 二次确认
-            this.$confirm(`确定要取消用户${row.username}咨询师资格吗？`, '提示', {
+            this.$confirm(`确定要取消用户${row.name}咨询师资格吗？`, '提示', {
                 type: 'warning'
             })
             .then(async() => {
@@ -245,7 +232,7 @@ export default {
                 if(i > 0){
                     str += '、';
                 }
-                str += this.multipleSelection[i].username;
+                str += this.multipleSelection[i].name;
                 delList.push(this.multipleSelection[i].id);
             }
             // 二次确认
@@ -281,7 +268,7 @@ export default {
                 await this.$store.dispatch("editUserById",this.form);
                 this.getData();
                 this.editVisible = false;
-                this.$message.success(`修改用户${this.form.username}信息成功`);
+                this.$message.success(`修改用户${this.form.name}信息成功`);
             } catch (error) {
                 this.$message.error("修改失败！请稍后再试");
             }

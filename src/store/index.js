@@ -6,12 +6,26 @@ Vue.use(Vuex);
 import user from './user'
 import essay from './essay'
 import comments from './comments'
+import question from './question'
+import answer from './answer'
+import test from './test'
+import sys from './sys'
+
+// 数据仓库
+const state = {
+    url: "http://192.168.1.191:8082"
+};
 
 export default new Vuex.Store({
+    state,
     modules: {
         user,
         essay,
-        comments
+        comments,
+        question,
+        answer,
+        test,
+        sys
     },
 });
 

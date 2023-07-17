@@ -15,7 +15,7 @@
                     </el-tooltip>
                 </div>
                 <!-- 消息中心 -->
-                <div class="btn-bell">
+                <!-- <div class="btn-bell">
                     <el-tooltip
                         effect="dark"
                         :content="message?`有${message}条未读消息`:`消息中心`"
@@ -26,10 +26,10 @@
                         </router-link>
                     </el-tooltip>
                     <span class="btn-bell-badge" v-if="message"></span>
-                </div>
+                </div> -->
                 <!-- 用户头像 -->
                 <div class="user-avator">
-                    <img src="../../assets/img/img.jpg" />
+                    <img :src="url+headImg" />
                 </div>
                 <!-- 用户名下拉菜单 -->
                 <el-dropdown class="user-name" trigger="click" @command="handleCommand">
@@ -38,9 +38,9 @@
                         <i class="el-icon-caret-bottom"></i>
                     </span>
                     <el-dropdown-menu slot="dropdown">
-                        <a href="https://github.com/lin-xin/vue-manage-system" target="_blank">
+                        <!-- <a href="https://github.com/lin-xin/vue-manage-system" target="_blank">
                             <el-dropdown-item>项目仓库</el-dropdown-item>
-                        </a>
+                        </a> -->
                         <el-dropdown-item divided command="loginout">退出登录</el-dropdown-item>
                     </el-dropdown-menu>
                 </el-dropdown>
@@ -49,27 +49,36 @@
     </div>
 </template>
 <script>
+import { mapState } from 'vuex';
 import bus from '../common/bus';
 export default {
     data() {
         return {
             collapse: false,
             fullscreen: false,
-            name: 'linxin',
-            message: 2
+            name: '管理员',
+            message: 2,
+            img: "../../assets/img/img.jpg"
         };
     },
     computed: {
         username() {
-            let username = localStorage.getItem('ms_username');
-            return username ? username : this.name;
-        }
+            let userInfo = JSON.parse(localStorage.getItem('userInfo'));
+            return userInfo ? userInfo.username : this.name;
+        },
+        headImg(){
+            let userInfo = JSON.parse(localStorage.getItem('userInfo'));
+            return userInfo ? userInfo.headImg : this.img;
+        },
+        ...mapState({
+            url: (state) => state.url
+        }),
     },
     methods: {
         // 用户名下拉菜单选择事件
         handleCommand(command) {
             if (command == 'loginout') {
-                localStorage.removeItem('ms_username');
+                localStorage.removeItem('userInfo');
                 this.$router.push('/login');
             }
         },

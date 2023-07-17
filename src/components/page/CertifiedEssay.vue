@@ -4,14 +4,14 @@
         <div class="crumbs">
             <el-breadcrumb separator="/">
                 <el-breadcrumb-item>
-                    <i class="el-icon-lx-cascades"></i> 科普文章管理
+                    <i class="el-icon-lx-cascades"></i> 文章审核
                 </el-breadcrumb-item>
             </el-breadcrumb>
         </div>
 
         <div class="container">
             <!-- 表格功能栏 -->
-            <div class="handle-box">
+            <!-- <div class="handle-box">
                 <el-button
                     type="primary"
                     icon="el-icon-delete"
@@ -22,7 +22,7 @@
                 <el-input v-model="query.title" placeholder="文章名" class="handle-input mr10"></el-input>
                 <el-input v-model="query.content" placeholder="文章内容检索" class="handle-input mr10"></el-input>
                 <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索</el-button>
-            </div>
+            </div> -->
             <!-- 表格数据体 -->
             <el-table
                 :data="essayList.records"
@@ -34,7 +34,7 @@
                 style="width: 100%"
                 @selection-change="handleSelectionChange"
             >
-                <el-table-column type="selection" width="55" align="center"></el-table-column>
+                <!-- <el-table-column type="selection" width="55" align="center"></el-table-column> -->
                 <el-table-column label="ID" width="55" align="center">
                     <template slot-scope="scope">
                         {{(query.pageIndex - 1) * query.pageSize + scope.$index+1}}
@@ -56,8 +56,6 @@
                         {{scope.row.source? scope.row.source:'无'}}
                     </template>
                 </el-table-column>
-                <el-table-column prop="readNum" label="阅读量" align="center" width="50"></el-table-column>
-                <el-table-column prop="essayLikes" label="点赞数量" align="center" width="50"></el-table-column>
                 <el-table-column prop="uploadTime" label="上传时间" align="center" width="100"></el-table-column>
                 <el-table-column label="操作" width="180" align="center" fixed="right">
                     <template slot-scope="scope">
@@ -65,13 +63,13 @@
                             type="text"
                             icon="el-icon-edit"
                             @click="handleEdit(scope.row)"
-                        >编辑</el-button>
+                        >查看</el-button>
                         <el-button
                             type="text"
                             icon="el-icon-delete"
                             class="red"
                             @click="handleDelete(scope.row)"
-                        >删除</el-button>
+                        >打回</el-button>
                     </template>
                 </el-table-column>
             </el-table>
@@ -90,7 +88,7 @@
         </div>
 
         <!-- 编辑弹出框 -->
-        <el-dialog title="编辑" :visible.sync="editVisible" width="30%">
+        <el-dialog title="编辑" :visible.sync="editVisible" width="70%">
             <el-form ref="form" :model="form" label-width="70px">
                 <el-form-item label="标题">
                     <label slot="label">标&nbsp;&nbsp;&nbsp;&nbsp;题</label>
@@ -104,38 +102,17 @@
                     <label slot="label">来&nbsp;&nbsp;&nbsp;&nbsp;源</label>
                     <el-input v-model="form.source"></el-input>
                 </el-form-item>
-                <el-row>
-                    <el-col :span="12">
-                        <el-form-item label="阅读量">
-                            <el-input v-model="form.readNum" disabled></el-input>
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="12">
-                        <el-form-item label="点赞量">
-                            <el-input v-model="form.essayLikes" disabled></el-input>
-                        </el-form-item>
-                    </el-col>
-                </el-row>
-
                 <el-form-item label="上传时间">
                     <el-input v-model="form.uploadTime"></el-input>
                 </el-form-item>
                 <el-form-item label="内容">
                     <label slot="label">内&nbsp;&nbsp;&nbsp;&nbsp;容</label>
-                    <el-input type="textarea" rows="8" v-model="form.content"></el-input>
+                    <el-input type="textarea" rows="12" v-model="form.content"></el-input>
                 </el-form-item>
-                <!-- <el-row>
-                    <el-col :span="12">
-                        
-                    </el-col>
-                    <el-col :span="12">
-
-                    </el-col>
-                </el-row> -->
             </el-form>
             <span slot="footer" class="dialog-footer">
-                <el-button @click="editVisible = false; form = {}">取 消</el-button>
-                <el-button type="primary" @click="saveEdit">确 定</el-button>
+                <el-button @click="editVisible = false; form = {}">返回</el-button>
+                <el-button type="primary" @click="saveEdit">通过</el-button>
             </span>
         </el-dialog>
     </div>
@@ -152,7 +129,7 @@ export default {
                 author: '',//作者
                 title: '',//文章标题
                 content: '',//文章内容
-                status: 0,
+                status: 1,
                 pageIndex: 1,
                 pageSize: 6
             },
@@ -166,28 +143,28 @@ export default {
     },
     computed: {
         ...mapState({
-            essayList: (state) => state.essay.essayList || [],
-            pageTotal: (state) => state.essay.essayList.total || 0
+            essayList: (state) => state.essay.cerList || [],
+            pageTotal: (state) => state.essay.cerList.total || 0
         })
     },
     mounted(){
         this.getData();
     },
     methods: {
-        // 获取所有用户的数据
+        // 获取数据
         getData() {
             this.$store.dispatch('getEssayList',this.query);
         },
-        // 搜索操作
-        handleSearch() {
-            // 为query对象添加属性pageIndex
-            this.$set(this.query, 'pageIndex', 1);
-            this.getData();
+        // 编辑操作
+        handleEdit(row) {//传递点击的行角标、行数据
+            let form = JSON.parse(JSON.stringify(row));
+            this.form = form;
+            this.editVisible = true;
         },
-        // 删除操作
+        // 打回申请
         handleDelete(row) {
-            // 二次确认删除
-            this.$confirm(`确定要删除文章《${row.title}》吗？`, '提示', {
+            // 二次确认
+            this.$confirm(`确定打回文章《${row.title}》吗？`, '提示', {
                 type: 'warning'
             })
             .then(async() => {
@@ -196,62 +173,35 @@ export default {
                     //添加进待删除数组数组
                     delList.push(row.id);
                     await this.$store.dispatch("deleteEssayByIds",delList);
-                    this.$message.success('删除成功');
+                    this.$message.success('打回成功');
                     this.getData();
+                    this.editVisible = false;
                 } catch (error) {
-                    this.$message.error('删除失败！请稍后再试');
+                    this.$message.error('打回失败！请稍后再试');
                 }
             })
             .catch(() => {});
         },
-        //批量删除
-        delAllSelection() {
-            const length = this.multipleSelection.length;
-            let str = '';
-            let delList = [];
-            for (let i = 0; i < length; i++) {
-                if(i > 0){
-                    str += '、';
-                }
-                str += "《" + this.multipleSelection[i].title + "》";
-                delList.push(this.multipleSelection[i].id);
-            }
-            // 二次确认删除
-            this.$confirm(`确定要删除文章${str}吗？`, '提示', {
-                type: 'warning'
-            })
-            .then(async() => {
-                try {
-                    await this.$store.dispatch("deleteEssayByIds",delList);
-                    this.$message.success('删除成功');
-                    this.getData();
-                    this.multipleSelection = [];
-                } catch (error) {
-                    this.$message.error('删除失败！请稍后再试');
-                }
-            })
-            .catch(() => {});
-        },
+        
         // 单选、多选、全选操作
         handleSelectionChange(val) {
             this.multipleSelection = val;
         },
-        // 编辑操作
-        handleEdit(row) {//传递点击的行角标、行数据
-            let form = JSON.parse(JSON.stringify(row));
-            this.form = form;
-            this.editVisible = true;
-        },
-        // 保存编辑
-        async saveEdit() {
+        // 通过审核
+        async saveEdit() {//传递点击的行角标、行数据
+            let form = this.form;
+            let newForm = {
+                id: form.id,
+                status: 1
+            }
             //发送请求进行更改 
             try {
-                await this.$store.dispatch("editEssayById",this.form);
+                await this.$store.dispatch("editEssayById",newForm);
                 this.getData();
+                this.$message.success(`审核完成`);
                 this.editVisible = false;
-                this.$message.success(`修改文章${this.form.title}信息成功`);
             } catch (error) {
-                this.$message.error("修改失败！请稍后再试");
+                this.$message.error("操作失败！请稍后再试");
             }
         },
         // 分页导航

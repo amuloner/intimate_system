@@ -5,7 +5,7 @@
             <el-form :model="param" :rules="rules" ref="login" label-width="0px" class="ms-content">
                 <el-form-item prop="username">
                     <el-input v-model="param.username" placeholder="username">
-                        <el-button slot="prepend" icon="el-icon-lx-people"></el-button>
+                        <el-button slot="prepend" icon="el-icon-user"></el-button>
                     </el-input>
                 </el-form-item>
                 <el-form-item prop="password">
@@ -15,25 +15,26 @@
                         v-model="param.password"
                         @keyup.enter.native="submitForm()"
                     >
-                        <el-button slot="prepend" icon="el-icon-lx-lock"></el-button>
+                        <el-button slot="prepend" icon="el-icon-lock"></el-button>
                     </el-input>
                 </el-form-item>
                 <div class="login-btn">
                     <el-button type="primary" @click="submitForm()">登录</el-button>
                 </div>
-                <p class="login-tips">Tips : 用户名和密码随便填。</p>
+                <!-- <p class="login-tips">Tips : 用户名和密码随便填。</p> -->
             </el-form>
         </div>
     </div>
 </template>
 
 <script>
+import { reqLogin } from '@/api';
 export default {
     data: function() {
         return {
             param: {
-                username: 'admin',
-                password: '123123',
+                username: '',
+                password: '',
             },
             rules: {
                 username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
@@ -43,11 +44,22 @@ export default {
     },
     methods: {
         submitForm() {
-            this.$refs.login.validate(valid => {
+            this.$refs.login.validate(async (valid) => {
+                //valid 验证结果
                 if (valid) {
-                    this.$message.success('登录成功');
-                    localStorage.setItem('ms_username', this.param.username);
-                    this.$router.push('/');
+                    //发送请求
+                    let result = await reqLogin(this.param);
+                    if(result.code == 200){
+                        let userInfo = {
+                            id: result.data.id,
+                            username: result.data.username,
+                            headImg:  result.data.headImg,
+                            authority: result.data.authority
+                        }
+                        localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                        this.$message.success('登录成功');
+                        this.$router.push('/');
+                    }
                 } else {
                     this.$message.error('请输入账号和密码');
                     console.log('error submit!!');
@@ -72,7 +84,7 @@ export default {
     line-height: 50px;
     text-align: center;
     font-size: 20px;
-    color: #fff;
+    color: #000;
     border-bottom: 1px solid #ddd;
 }
 .ms-login {

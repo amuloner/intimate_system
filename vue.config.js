@@ -14,7 +14,8 @@ module.exports = defineConfig({
   devServer: {
     proxy: {
       "/im": {
-        target: "http://127.0.0.1:8082"
+        // target: "http://127.0.0.1:8082"
+        target: "http://192.168.1.191:8082"
       }
     }
   }

@@ -19,10 +19,13 @@
                     @click="delAllSelection"
                 >批量删除</el-button>
                 <el-select v-model="query.authority" placeholder="权限" class="handle-select mr10">
+                    
+                    <el-option key="0" label="全部" value=""></el-option>
                     <el-option key="1" label="用户" value="2"></el-option>
                     <el-option key="2" label="咨询师" value="1"></el-option>
+
                 </el-select>
-                <el-input v-model="query.username" placeholder="用户名" class="handle-input mr10"></el-input>
+                <el-input v-model="query.nickname" placeholder="用户名" class="handle-input mr10"></el-input>
                 <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索</el-button>
             </div>
             <!-- 表格数据体 -->
@@ -39,40 +42,35 @@
                 <el-table-column type="selection" width="55" align="center"></el-table-column>
                 <el-table-column fixed="left" label="ID" width="55" align="center">
                     <template slot-scope="scope">
-                        {{scope.$index+1}}
+                        {{(query.pageIndex - 1) * query.pageSize + scope.$index+1}}
                     </template>
                 </el-table-column>
-                <el-table-column fixed="left" prop="username" label="用户名" align="center"></el-table-column>
-                <el-table-column prop="nickname" label="昵称" align="center"></el-table-column>
-                <el-table-column label="性别" align="center">
+                <el-table-column fixed="left" prop="nickname" label="昵称" align="center"></el-table-column>
+                <el-table-column label="性别" align="center" width="50">
                     <template slot-scope="scope">
                         {{scope.row.gender==='1'?'男':'女'}}
                     </template>
                 </el-table-column>
                 <!-- 头像展示且开启大图预览功能 -->
-                <el-table-column label="头像(点击放大)" align="center">
+                <el-table-column label="头像" align="center">
                     <template slot-scope="scope">
                         <el-image
                             class="table-td-thumb"
-                            :src="scope.row.thumb"
-                            :preview-src-list="[scope.row.thumb]"
+                            :src="scope.row.headImg"
+                            :preview-src-list="[scope.row.headImg]"
                         ></el-image>
                     </template>
                 </el-table-column>
-                <el-table-column prop="email" label="邮箱" width="160"></el-table-column>
-                <el-table-column prop="date" label="注册时间" width="95"></el-table-column>
+                <el-table-column prop="age" label="年龄" width="50" align="center"></el-table-column>
+                <el-table-column prop="email" label="邮箱" width="180"></el-table-column>
+                <el-table-column prop="phone" label="手机号" width="110" align="center"></el-table-column>
                 <el-table-column prop="address" label="地址" show-overflow-tooltip></el-table-column>
-                <el-table-column label="实名状态">
-                    <template slot-scope="scope">
-                        {{!scope.row.idCard?"未实名":"已实名"}}
-                    </template>         
-                </el-table-column>
-
                 <el-table-column label="权限" align="center" fixed="right">
                     <template slot-scope="scope">
                         {{scope.row.authority === '2'?"用户":"咨询师"}}
                     </template>
                 </el-table-column>
+                <el-table-column prop="date" label="注册时间" width="95"></el-table-column>
                 <el-table-column label="操作" width="180" align="center" fixed="right">
                     <template slot-scope="scope">
                         <el-button
@@ -108,10 +106,7 @@
             <el-form ref="form" :model="form" label-width="70px">
                 <el-form-item label="头像">
                     <label slot="label">头&nbsp;&nbsp;&nbsp;&nbsp;像</label>
-                    <el-image class="table-td-thumb2" :src="form.thumb" :preview-src-list="[form.thumb]"></el-image>
-                </el-form-item>
-                <el-form-item label="用户名">
-                    <el-input v-model="form.username"></el-input>
+                    <el-image class="table-td-thumb2" :src="form.headImg" :preview-src-list="[form.headImg]"></el-image>
                 </el-form-item>
                 <el-form-item label="昵称">
                     <label slot="label">昵&nbsp;&nbsp;&nbsp;&nbsp;称</label>
@@ -137,6 +132,10 @@
                         </el-form-item>
                     </el-col>
                 </el-row>
+                <el-form-item label="手机">
+                    <label slot="label">手&nbsp;&nbsp;&nbsp;&nbsp;机</label>
+                    <el-input v-model="form.phone"></el-input>
+                </el-form-item>
                 <el-form-item label="邮箱">
                     <label slot="label">邮&nbsp;&nbsp;&nbsp;&nbsp;箱</label>
                     <el-input v-model="form.email"></el-input>
@@ -145,10 +144,13 @@
                     <label slot="label">地&nbsp;&nbsp;&nbsp;&nbsp;址</label>
                     <el-input v-model="form.address"></el-input>
                 </el-form-item>
+                <el-form-item label="注册时间">
+                    <el-input v-model="form.date" disabled></el-input>
+                </el-form-item>
             </el-form>
             <span slot="footer" class="dialog-footer">
                 <el-button @click="editVisible = false; form = {}">取 消</el-button>
-                <el-button type="primary" @click="saveEdit">确 定</el-button>
+                <el-button type="primary" @click="saveEdit">修 改</el-button>
             </span>
         </el-dialog>
     </div>
@@ -157,6 +159,8 @@
 <script>
 import { fetchData } from '@/api/index';
 import { mapState } from "vuex";
+import { isObjectValueEqual } from "@/utils/myFun";
+
 export default {
     name: 'usertable',
     data() {
@@ -164,15 +168,16 @@ export default {
             // 搜索条件
             query: {
                 authority: '',
-                username: '',
+                nickname: '',
                 pageIndex: 1,
-                pageSize: 3
+                pageSize: 6
             },
             multipleSelection: [],
             //编辑框是否显示
             editVisible: false,
             // pageTotal: 0,
-            form: {},
+            form: {},//编辑框item
+            oldForm: {},//未修改的编辑框item
             id: -1
         };
     },
@@ -199,7 +204,7 @@ export default {
         // 删除操作
         handleDelete(row) {
             // 二次确认删除
-            this.$confirm(`确定要删除用户${row.username}吗？`, '提示', {
+            this.$confirm(`确定要删除用户${row.nickname}吗？`, '提示', {
                 type: 'warning'
             })
             .then(async() => {
@@ -225,7 +230,7 @@ export default {
                 if(i > 0){
                     str += '、';
                 }
-                str += this.multipleSelection[i].username;
+                str += this.multipleSelection[i].nickname;
                 delList.push(this.multipleSelection[i].id);
             }
             // 二次确认删除
@@ -250,18 +255,24 @@ export default {
         },
         // 编辑操作
         handleEdit(row) {//传递点击的行角标、行数据
-            let form = JSON.parse(JSON.stringify(row));
-            this.form = form;
+            this.form = JSON.parse(JSON.stringify(row));
+            this.oldForm = JSON.parse(JSON.stringify(row));
             this.editVisible = true;
         },
         // 保存编辑
         async saveEdit() {
+            console.log(isObjectValueEqual(this.form, this.oldForm))
+            //判断是否对数据进行了更改
+            if(isObjectValueEqual(this.form, this.oldForm)){
+                return;
+            }
+
             //发送请求进行更改 
             try {
                 await this.$store.dispatch("editUserById",this.form);
                 this.getData();
                 this.editVisible = false;
-                this.$message.success(`修改用户${this.form.username}信息成功`);
+                this.$message.success(`修改用户${this.form.nickname}信息成功`);
             } catch (error) {
                 this.$message.error("修改失败！请稍后再试");
             }
